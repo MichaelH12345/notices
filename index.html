@@ -28,7 +28,7 @@
         .fadeBetween {
             --transition-speed: 0.25s;
             display: grid;
-            font-size: 47.5px;
+            font-size: 40px;
             font-family: BlackBox, sans-serif; /* Use the custom font */
             grid-template-areas: "a";
             grid-template-columns: 1fr;
@@ -85,7 +85,7 @@
     </div>
 
     <script>
-        const crsCode = 'CAR'; // Replace with your CRS code or fetch it dynamically if needed
+        const crsCode = 'EUS'; // Replace with your CRS code or fetch it dynamically if needed
         const apiURL = `https://national-rail-api.davwheat.dev/staffdepartures/${crsCode}?expand=true`;
         const secondsPerEl = 7; // Duration each message is displayed
         const updateInterval = 30 * 1000; // 30 seconds
@@ -149,14 +149,14 @@
                     // Add a fallback message if there is only one message
                     if (newMessages.length === 1) {
                         newMessages.push(
-                            'If you see something that doesn\'t look right, speak to staff or text the British Transport Police on 61016. We\'ll sort it. See it. Say it. Sorted.'
+                            'We can’t change the weather, but it can change your plans. Check your train is running on time this Autumn at nationalrail.co.uk.'
                         );
                     }
                 } else {
                     newMessages = [
                         'If you see something that doesn\'t look right, speak to staff or text the British Transport Police on 61016. We\'ll sort it. See it. Say it. Sorted.',
                         'Please keep your belongings with you at all times whilst at this station. Any unattended articles are likely to be removed without warning, or destroyed.',
-                        'Fast trains pass through this station. For your own safety you are reminded to stand behind the yellow line at all times.'
+                        'We can’t change the weather, but it can change your plans. Check your train is running on time this Autumn at nationalrail.co.uk.'
                     ];
                 }
 
