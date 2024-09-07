@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Special Notices with Animation</title>
+    <style>
+        @font-face {
+            font-family: 'BlackBox';
+            src: url('https://raw.githubusercontent.com/MichaelH12345/Departures1/main/BlackBox_Font.ttf') format('truetype');
+        }
+
+        body {
+            font-family: BlackBox, sans-serif;
+            background-color: black; /* Set the background color to black */
+            color: white; /* Set the text color to white for better contrast */
+            margin: 0; /* Remove default margin */
+            overflow: hidden; /* Hide scrollbars */
+        }
+
+        a {
+            color: white;  /* Set the link color to white */
+            text-decoration: none;  /* Remove underline */
+            pointer-events: none;  /* Disable clicking */
+            cursor: default;  /* Change the cursor to default (non-clickable) */
+        }
+
+        .fadeBetween {
+            --transition-speed: 0.25s;
+            display: grid;
+            font-size: 47.5px;
+            font-family: BlackBox, sans-serif; /* Use the custom font */
+            grid-template-areas: "a";
+            grid-template-columns: 1fr;
+            grid-template-rows: 1fr;
+            height: 100vh; /* Full viewport height for demonstration */
+            align-items: top; /* Center items vertically */
+            justify-content: center; /* Center items horizontally */
+            text-align: center; /* Center text alignment */
+        }
+
+        .fadeBetween>.textOption {
+            grid-area: a;
+            transition: opacity var(--transition-speed) ease-in-out;
+            font-size: 75px; /* Set text size */
+            font-family: BlackBox, sans-serif; /* Use the custom font */
+        }
+
+        .fadeBetween .in {
+            animation: slideIn var(--transition-speed) ease-in 0s 1;
+            opacity: 1;
+        }
+
+        .fadeBetween .out {
+            animation: slideOut var(--transition-speed) ease-out 0s 1;
+            opacity: 0;
+        }
+
+        @keyframes slideIn {
+            0% {
+                transform: translateY(-10px);
+                opacity: 0;
+            }
+            100% {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+
+        @keyframes slideOut {
+            0% {
+                transform: translateY(0);
+                opacity: 1;
+            }
+            100% {
+                transform: translateY(10px);
+                opacity: 0;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="fadeBetween" id="specialNotices">
+        <!-- Text elements will be inserted here by JavaScript -->
+    </div>
+
+    <script>
+        const crsCode = 'CAR'; // Replace with your CRS code or fetch it dynamically if needed
+        const apiURL = `https://national-rail-api.davwheat.dev/staffdepartures/${crsCode}?expand=true`;
+        const secondsPerEl = 7; // Duration each message is displayed
+        const updateInterval = 30 * 1000; // 30 seconds
+
+        let messages = [];
+        let previousMessages = [];
+        let currentIndex = 0;
+        let animationTimeout;
+
+        const container = document.getElementById('specialNotices');
+
+        // Create and insert text elements
+        function updateTextElements() {
+            container.innerHTML = ''; // Clear existing elements
+            messages.forEach((text) => {
+                const div = document.createElement('div');
+                div.className = 'textOption';
+                div.innerHTML = text; // Use innerHTML to handle HTML content
+                container.appendChild(div);
+            });
+        }
+
+        // Function to handle animation
+        function animate() {
+            if (messages.length === 0) return;
+
+            const textOptions = container.querySelectorAll('.textOption');
+
+            // Remove "in" class from the current element
+            textOptions.forEach((el) => {
+                el.classList.remove('in');
+                el.classList.add('out');
+            });
+
+            // Update the notice after the fade-out completes
+            setTimeout(() => {
+                currentIndex = (currentIndex + 1) % textOptions.length;
+                textOptions[currentIndex].classList.remove('out');
+                textOptions[currentIndex].classList.add('in');
+            }, 500); // Delay to match the end of the fade-out animation
+
+            // Set up the next animation
+            animationTimeout = setTimeout(animate, (secondsPerEl * 1000) + 500);
+        }
+
+        // Fetch messages from the API
+        async function fetchMessages() {
+            try {
+                console.log('Fetching data from API...');
+                const response = await fetch(apiURL);
+                const data = await response.json();
+
+                // Log the entire data to the console for debugging
+                console.log('API Data:', data);
+
+                // Check for nrccMessages
+                let newMessages = [];
+                if (data.nrccMessages && data.nrccMessages.length > 0) {
+                    newMessages = data.nrccMessages.map(msg => msg.xhtmlMessage);
+
+                    // Add a fallback message if there is only one message
+                    if (newMessages.length === 1) {
+                        newMessages.push(
+                            'If you see something that doesn\'t look right, speak to staff or text the British Transport Police on 61016. We\'ll sort it. See it. Say it. Sorted.'
+                        );
+                    }
+                } else {
+                    newMessages = [
+                        'If you see something that doesn\'t look right, speak to staff or text the British Transport Police on 61016. We\'ll sort it. See it. Say it. Sorted.',
+                        'Please keep your belongings with you at all times whilst at this station. Any unattended articles are likely to be removed without warning, or destroyed.',
+                        'Fast trains pass through this station. For your own safety you are reminded to stand behind the yellow line at all times.'
+                    ];
+                }
+
+                // Log messages to the console for debugging
+                console.log('Messages:', newMessages);
+
+                // Restart animation if messages have changed
+                if (JSON.stringify(newMessages) !== JSON.stringify(previousMessages)) {
+                    previousMessages = [...newMessages];
+                    messages = [...newMessages];
+                    currentIndex = 0; // Restart from the first message
+
+                    updateTextElements();
+                    clearTimeout(animationTimeout);
+                    animate();
+                }
+            } catch (error) {
+                console.error('Error fetching messages:', error);
+                // Fall back to static messages on error
+                const fallbackMessages = [
+                    'Error fetching Status and Disruption information. Please speak to staff for any disruption information that may impact your journey.',
+                ];
+                if (JSON.stringify(fallbackMessages) !== JSON.stringify(previousMessages)) {
+                    previousMessages = [...fallbackMessages];
+                    messages = [...fallbackMessages];
+                    currentIndex = 0; // Restart from the first message
+
+                    updateTextElements();
+                    clearTimeout(animationTimeout);
+                    animate();
+                }
+            }
+        }
+
+        // Initial fetch and setup periodic updates
+        fetchMessages(); // Initial fetch
+        setInterval(fetchMessages, updateInterval); // Fetch new messages every 30 seconds
+    </script>
+</body>
+</html>
