@@ -12,38 +12,38 @@
 
         body {
             font-family: BlackBox, sans-serif;
-            background-color: black; /* Set the background color to black */
-            color: white; /* Set the text color to white for better contrast */
-            margin: 0; /* Remove default margin */
-            overflow: hidden; /* Hide scrollbars */
+            background-color: black;
+            color: white;
+            margin: 0;
+            overflow: hidden;
         }
 
         a {
-            color: white;  /* Set the link color to white */
-            text-decoration: none;  /* Remove underline */
-            pointer-events: none;  /* Disable clicking */
-            cursor: default;  /* Change the cursor to default (non-clickable) */
+            color: white;
+            text-decoration: none;
+            pointer-events: none;
+            cursor: default;
         }
 
         .fadeBetween {
             --transition-speed: 0.25s;
             display: grid;
             font-size: 35px;
-            font-family: BlackBox, sans-serif; /* Use the custom font */
+            font-family: BlackBox, sans-serif;
             grid-template-areas: "a";
             grid-template-columns: 1fr;
             grid-template-rows: 1fr;
-            height: 100vh; /* Full viewport height for demonstration */
-            align-items: top; /* Center items vertically */
-            justify-content: center; /* Center items horizontally */
-            text-align: center; /* Center text alignment */
+            height: 100vh;
+            align-items: top;
+            justify-content: center;
+            text-align: center;
         }
 
         .fadeBetween>.textOption {
             grid-area: a;
             transition: opacity var(--transition-speed) ease-in-out;
-            font-size: 50px; /* Set text size */
-            font-family: BlackBox, sans-serif; /* Use the custom font */
+            font-size: 50px;
+            font-family: BlackBox, sans-serif;
         }
 
         .fadeBetween .in {
@@ -85,7 +85,7 @@
     </div>
 
     <script>
-        const crsCode = 'CAR'; // Replace with your CRS code or fetch it dynamically if needed
+        const crsCode = 'MAN'; // Replace with your CRS code or fetch it dynamically if needed
         const apiURL = `https://national-rail-api.davwheat.dev/staffdepartures/${crsCode}?expand=true`;
         const secondsPerEl = 7; // Duration each message is displayed
         const updateInterval = 30 * 1000; // 30 seconds
@@ -131,6 +131,30 @@
             animationTimeout = setTimeout(animate, (secondsPerEl * 1000) + 500);
         }
 
+        // Modify message based on conditions
+        function modifyMessage(message) {
+            const liftRegex = /lifts?.*out of order/i;
+            const ticketOfficeRegex = /ticket office.*closed/i;
+            const shortStaffedRegex = /short[-\s]?staffed/i;
+
+            // Check for lift out-of-order
+            if (liftRegex.test(message)) {
+                message += 'Need to use a lift? This may affect your journey today. Please speak to a member of staff so we can help you. Sorry, your journey may take longer.';
+            }
+
+            // Replace ticket office closure messages
+            if (ticketOfficeRegex.test(message)) {
+                message = 'We\'re sorry, the Ticket Office is currently closed. You can still use the ticket vending machines to buy most tickets, or from the Train Manager on board.';
+            }
+
+            // Replace short-staffed messages
+            if (shortStaffedRegex.test(message)) {
+                message = 'Sorry, we\'re a bit short-staffed today. We\'ll do our best to help you, however please allow extra time if you need support with your journey.';
+            }
+
+            return message;
+        }
+
         // Fetch messages from the API
         async function fetchMessages() {
             try {
@@ -144,18 +168,18 @@
                 // Check for nrccMessages
                 let newMessages = [];
                 if (data.nrccMessages && data.nrccMessages.length > 0) {
-                    newMessages = data.nrccMessages.map(msg => msg.xhtmlMessage);
+                    newMessages = data.nrccMessages.map(msg => modifyMessage(msg.xhtmlMessage));
 
                     // Add a fallback message if there is only one message
                     if (newMessages.length === 1) {
                         newMessages.push(
-                            'Try our \'Alert Me\' service that lets you know in advance if your train or station might be busy, as well as any disruptions or changes to your route.'
+                            'Try our \'Alert Me\' service that lets you know in advance if your train or station might be busy, as well as any disruptions or changes to your route. <br> <br> Sign up to \'Alert Me\' by Messenger, SMS or WhatsApp.'
                         );
                     }
                 } else {
                     newMessages = [
-                        'Try our \'Alert Me\' service that lets you know in advance if your train or station might be busy, as well as any disruptions or changes to your route.',
-                        'Sign up to our \'Alert Me\' service by Messenger, SMS or WhatsApp',
+                        'Try our \'Alert Me\' service that lets you know in advance if your train or station might be busy, as well as any disruptions or changes to your route. <br> <br> Sign up to \'Alert Me\' by Messenger, SMS or WhatsApp.',
+                        'If you see something that doesn\'t look right, speak to staff or text the British Transport Police on 61016. We\'ll sort it. See it. Say it. Sorted.',
                         'We can’t change the weather, but it can change your plans.<br>Check your train is running on time this Autumn at nationalrail.co.uk.'
                     ];
                 }
@@ -175,14 +199,13 @@
                 }
             } catch (error) {
                 console.error('Error fetching messages:', error);
-                // Fall back to static messages on error
                 const fallbackMessages = [
-                    'Error fetching Status and Disruption information. Please speak to staff for any disruption information that may impact your journey.',
+                    'Error fetching Status and Disruption information. Please speak to staff for any disruption information that may impact your journey.'
                 ];
                 if (JSON.stringify(fallbackMessages) !== JSON.stringify(previousMessages)) {
                     previousMessages = [...fallbackMessages];
                     messages = [...fallbackMessages];
-                    currentIndex = 0; // Restart from the first message
+                    currentIndex = 0;
 
                     updateTextElements();
                     clearTimeout(animationTimeout);
