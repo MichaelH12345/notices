@@ -3,220 +3,146 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Special Notices with Animation</title>
+    <title>Image and Text Box Example</title>
     <style>
+        /* Load custom font from GitHub */
         @font-face {
-            font-family: 'BlackBox';
-            src: url('https://raw.githubusercontent.com/MichaelH12345/Departures1/main/BlackBox_Font.ttf') format('truetype');
+            font-family: 'NetworkRailSans';
+            src: url('https://raw.githubusercontent.com/MichaelH12345/notices/main/network_rail_sans-webfont%20(1).ttf') format('truetype');
         }
 
-        body {
-            font-family: BlackBox, sans-serif;
-            background-color: black;
-            color: white;
-            margin: 0;
-            overflow: hidden;
-        }
-
+        /* Style for links (set to white and disable interaction) */
         a {
+            color: white;  /* Set the link color to white */
+            text-decoration: none;  /* Remove underline */
+            pointer-events: none;  /* Disable clicking */
+            cursor: default;  /* Change the cursor to default (non-clickable) */
+        }
+
+        /* Style for the text box */
+        .text-box {
+            width: 540px;
+            left: 20px;
             color: white;
-            text-decoration: none;
-            pointer-events: none;
-            cursor: default;
+            padding: 20px;
+            margin-top: 120px;
+            font-family: 'NetworkRailSans', Arial, sans-serif; /* Apply custom font */
+            font-size: 40px;
+            text-align: left; /* Center the text */
+            position: relative;
+            z-index: 2; /* Make sure the text box is on top */
+            
         }
 
-        .fadeBetween {
-            --transition-speed: 0.25s;
-            display: grid;
-            font-size: 30px;
-            font-family: BlackBox, sans-serif;
-            grid-template-areas: "a";
-            grid-template-columns: 1fr;
-            grid-template-rows: 1fr;
-            height: 100vh;
-            align-items: top;
-            justify-content: center;
-            text-align: center;
+        /* Style for the image with fixed size */
+        .image {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 638px;  /* Set the image width to 638px */
+            height: 929px; /* Set the image height to 929px */
+            z-index: 1; /* Set the image behind the text */
         }
 
-        .fadeBetween>.textOption {
-            grid-area: a;
-            transition: opacity var(--transition-speed) ease-in-out;
-            font-size: 50px;
-            font-family: BlackBox, sans-serif;
-        }
-
-        .fadeBetween .in {
-            animation: slideIn var(--transition-speed) ease-in 0s 1;
-            opacity: 1;
-        }
-
-        .fadeBetween .out {
-            animation: slideOut var(--transition-speed) ease-out 0s 1;
-            opacity: 0;
-        }
-
-        @keyframes slideIn {
-            0% {
-                transform: translateY(-10px);
-                opacity: 0;
-            }
-            100% {
-                transform: translateY(0);
-                opacity: 1;
-            }
-        }
-
-        @keyframes slideOut {
-            0% {
-                transform: translateY(0);
-                opacity: 1;
-            }
-            100% {
-                transform: translateY(10px);
-                opacity: 0;
-            }
+        /* Style for the page counter */
+        .page-counter {
+            color: white;
+            font-family: 'NetworkRailSans', Arial, sans-serif;
+            font-size: 35px;
+            position: absolute;
+            top: 840px;
+            left: 45px;
+            z-index: 3;
         }
     </style>
 </head>
 <body>
-    <div class="fadeBetween" id="specialNotices">
-        <!-- Text elements will be inserted here by JavaScript -->
+    <!-- Image placed at the top-left corner with fixed size -->
+    <img src="https://github.com/MichaelH12345/notices/blob/main/Information%20(2).png?raw=true" alt="Information Image" class="image">
+
+    <!-- Text box to display message -->
+    <div class="text-box" id="message-box">
+        <!-- Message will be injected here by JavaScript -->
     </div>
 
+    <!-- Page counter -->
+    <div class="page-counter" id="page-counter">Page 1 of 1</div>
+
     <script>
-        const crsCode = 'CAR'; // Replace with your CRS code or fetch it dynamically if needed
-        const apiURL = `https://national-rail-api.davwheat.dev/staffdepartures/${crsCode}?expand=true`;
-        const secondsPerEl = 7; // Duration each message is displayed
-        const updateInterval = 30 * 1000; // 30 seconds
-
+        let currentPage = 1;
+        let totalPages = 1;
         let messages = [];
-        let previousMessages = [];
-        let currentIndex = 0;
-        let animationTimeout;
 
-        const container = document.getElementById('specialNotices');
-
-        // Create and insert text elements
-        function updateTextElements() {
-            container.innerHTML = ''; // Clear existing elements
-            messages.forEach((text) => {
-                const div = document.createElement('div');
-                div.className = 'textOption';
-                div.innerHTML = text; // Use innerHTML to handle HTML content
-                container.appendChild(div);
-            });
-        }
-
-        // Function to handle animation
-        function animate() {
-            if (messages.length === 0) return;
-
-            const textOptions = container.querySelectorAll('.textOption');
-
-            // Remove "in" class from the current element
-            textOptions.forEach((el) => {
-                el.classList.remove('in');
-                el.classList.add('out');
-            });
-
-            // Update the notice after the fade-out completes
-            setTimeout(() => {
-                currentIndex = (currentIndex + 1) % textOptions.length;
-                textOptions[currentIndex].classList.remove('out');
-                textOptions[currentIndex].classList.add('in');
-            }, 500); // Delay to match the end of the fade-out animation
-
-            // Set up the next animation
-            animationTimeout = setTimeout(animate, (secondsPerEl * 1000) + 500);
-        }
-
-        // Modify message based on conditions
-        function modifyMessage(message) {
-            const liftRegex = /lifts?.*out of order/i;
-            const ticketOfficeRegex = /ticket office.*closed/i;
-            const shortStaffedRegex = /short[-\s]?staffed/i;
-
-            // Check for lift out-of-order
-            if (liftRegex.test(message)) {
-                message += 'Need to use a lift? This may affect your journey. Please speak to a member of staff so we can help you.';
-            }
-
-            // Replace ticket office closure messages
-            if (ticketOfficeRegex.test(message)) {
-                message = 'We\'re sorry, the Ticket Office is currently closed. You can still use the ticket vending machines to buy most tickets, or from the Train Manager on board.';
-            }
-
-            // Replace short-staffed messages
-            if (shortStaffedRegex.test(message)) {
-                message = 'Sorry, we\'re a bit short-staffed today. We\'ll do our best to help you, however please allow extra time if you need support with your journey.';
-            }
-
-            return message;
-        }
-
-        // Fetch messages from the API
-        async function fetchMessages() {
-            try {
-                console.log('Fetching data from API...');
-                const response = await fetch(apiURL);
-                const data = await response.json();
-
-                // Log the entire data to the console for debugging
-                console.log('API Data:', data);
-
-                // Check for nrccMessages
-                let newMessages = [];
-                if (data.nrccMessages && data.nrccMessages.length > 0) {
-                    newMessages = data.nrccMessages.map(msg => modifyMessage(msg.xhtmlMessage));
-
-                    // Add a fallback message if there is only one message
-                    if (newMessages.length === 1) {
-                        newMessages.push(
-                            'If your journey is delayed by 15 minutes or more, you may be entitled for compensation. Visit lnr.uk/delayrepay for more information.'
-                        );
-                    }
+        // Fetch the data from the API
+        fetch('https://national-rail-api.davwheat.dev/staffdepartures/CAR?expand=true')
+            .then(response => response.json())
+            .then(data => {
+                // Check if there are nrccMessages and if there are xhtmlMessages
+                const nrccMessages = data.nrccMessages;
+                if (nrccMessages && nrccMessages.length > 0) {
+                    // Process and clean each message
+                    messages = nrccMessages.map(message => processMessage(message.xhtmlMessage));
+                    totalPages = messages.length;
+                    updateMessage();
                 } else {
-                    newMessages = [
-                        'Want to provide feedback on your journey? Please complete our short survey and help improve the service we provide for you by visiting lnr.uk/yourjourney',
-                        'Join our customer panel to help improve what we do. Find out more at lnr.uk/panel',
-                        'For safety reasons e-scooters are banned from the railway. This includes at stations and on board trains. Please travel without them.'
-                    ];
+                    document.getElementById('message-box').innerHTML = 'No messages available.';
                 }
 
-                // Log messages to the console for debugging
-                console.log('Messages:', newMessages);
+                // Update page counter initially
+                updatePageCounter();
 
-                // Restart animation if messages have changed
-                if (JSON.stringify(newMessages) !== JSON.stringify(previousMessages)) {
-                    previousMessages = [...newMessages];
-                    messages = [...newMessages];
-                    currentIndex = 0; // Restart from the first message
+                // Cycle through messages every 10 seconds
+                setInterval(() => {
+                    currentPage = (currentPage % totalPages) + 1; // Loop back to the first page after the last one
+                    updateMessage();
+                    updatePageCounter();
+                }, 10000); // 10 seconds
+            })
+            .catch(error => {
+                console.error('Error fetching data:', error);
+                document.getElementById('message-box').innerHTML = 'Failed to load messages.';
+            });
 
-                    updateTextElements();
-                    clearTimeout(animationTimeout);
-                    animate();
-                }
-            } catch (error) {
-                console.error('Error fetching messages:', error);
-                const fallbackMessages = [
-                    'Error fetching Status and Disruption information. Please speak to staff for any disruption information that may impact your journey.'
-                ];
-                if (JSON.stringify(fallbackMessages) !== JSON.stringify(previousMessages)) {
-                    previousMessages = [...fallbackMessages];
-                    messages = [...fallbackMessages];
-                    currentIndex = 0;
+        // Function to process and clean the message content
+        function processMessage(message) {
+            // Get the first 5 characters
+            let firstFiveChars = message.slice(0, 5);
 
-                    updateTextElements();
-                    clearTimeout(animationTimeout);
-                    animate();
-                }
+            // Remove <p> and </p> tags from the first 5 characters only
+            firstFiveChars = firstFiveChars.replace(/<p>/g, '').replace(/<\/p>/g, '');
+
+            // Get the rest of the message (starting from the 6th character onwards)
+            let remainingMessage = message.slice(5);
+
+            // Reassemble the cleaned message
+            let cleanedMessage = firstFiveChars + remainingMessage;
+
+            // Remove newline characters
+            cleanedMessage = cleanedMessage.replace(/\n/g, '');
+
+            // Remove Unicode escape sequences
+            cleanedMessage = cleanedMessage.replace(/\\u[0-9a-fA-F]{4}/g, '');
+
+            // Replace certain phrases
+            cleanedMessage = cleanedMessage.replace(/(More details|More information|Latest).*/i, 'More details at nationalrail.co.uk.');
+
+            // Add line breaks after colons
+            cleanedMessage = cleanedMessage.replace(/:/g, ':<br>');
+
+            return cleanedMessage;
+        }
+
+        // Function to update the message box
+        function updateMessage() {
+            if (messages.length > 0) {
+                document.getElementById('message-box').innerHTML = messages[currentPage - 1];
             }
         }
 
-        // Initial fetch and setup periodic updates
-        fetchMessages(); // Initial fetch
-        setInterval(fetchMessages, updateInterval); // Fetch new messages every 30 seconds
+        // Function to update the page counter
+        function updatePageCounter() {
+            document.getElementById('page-counter').textContent = `Page ${currentPage} of ${totalPages}`;
+        }
     </script>
 </body>
 </html>
