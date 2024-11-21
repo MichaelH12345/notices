@@ -44,8 +44,8 @@
             position: absolute;
             top: 0;
             left: 0;
-            width: 618px;  /* Set the image width to 638px */
-            height: 909px; /* Set the image height to 929px */
+            width: 628px;  /* Set the image width to 638px */
+            height: 919px; /* Set the image height to 929px */
             z-index: 1; /* Set the image behind the text */
         }
 
@@ -79,7 +79,7 @@
         let messages = [];
 
         // Fetch the data from the API
-        fetch('https://national-rail-api.davwheat.dev/staffdepartures/CAR?expand=true')
+        fetch('https://national-rail-api.davwheat.dev/staffdepartures/EXT?expand=true')
             .then(response => response.json())
             .then(data => {
                 // Check if there are nrccMessages and if there are xhtmlMessages
