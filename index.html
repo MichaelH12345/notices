@@ -5,51 +5,45 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Image and Text Box Example</title>
     <style>
-        /* Load custom font from GitHub */
         @font-face {
             font-family: 'NetworkRailSans';
             src: url('https://raw.githubusercontent.com/MichaelH12345/notices/main/network_rail_sans-webfont%20(1).ttf') format('truetype');
         }
 
-        /* Set the background color of the page to white */
         body {
-            background-color: white; /* White background */
-            margin: 0; /* Remove default margin */
+            background-color: white;
+            margin: 0;
         }
 
-        /* Style for links (set to white and disable interaction) */
         a {
-            color: white;  /* Set the link color to white */
-            text-decoration: none;  /* Remove underline */
-            pointer-events: none;  /* Disable clicking */
-            cursor: default;  /* Change the cursor to default (non-clickable) */
+            color: white;
+            text-decoration: none;
+            pointer-events: none;
+            cursor: default;
         }
 
-        /* Style for the text box */
         .text-box {
             width: 540px;
             left: 25px;
             color: white;
             padding: 20px;
             margin-top: 120px;
-            font-family: 'NetworkRailSans', Arial, sans-serif; /* Apply custom font */
+            font-family: 'NetworkRailSans', Arial, sans-serif;
             font-size: 40px;
-            text-align: left; /* Center the text */
+            text-align: left;
             position: relative;
-            z-index: 2; /* Make sure the text box is on top */
+            z-index: 2;
         }
 
-        /* Style for the image with fixed size */
         .image {
             position: absolute;
             top: 0;
             left: 0;
-            width: 628px;  /* Set the image width to 638px */
-            height: 919px; /* Set the image height to 929px */
-            z-index: 1; /* Set the image behind the text */
+            width: 628px;
+            height: 919px;
+            z-index: 1;
         }
 
-        /* Style for the page counter */
         .page-counter {
             color: white;
             font-family: 'NetworkRailSans', Arial, sans-serif;
@@ -59,33 +53,50 @@
             left: 45px;
             z-index: 3;
         }
+
+        .fade-in {
+            animation: fadeIn 0.5s ease-in forwards;
+        }
+
+        .fade-out {
+            animation: fadeOut 0.5s ease-out forwards;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+            }
+            to {
+                opacity: 1;
+            }
+        }
+
+        @keyframes fadeOut {
+            from {
+                opacity: 1;
+            }
+            to {
+                opacity: 0;
+            }
+        }
     </style>
 </head>
 <body>
-    <!-- Image placed at the top-left corner with fixed size -->
     <img src="https://github.com/MichaelH12345/notices/blob/main/Information%20(2).png?raw=true" alt="Information Image" class="image">
-
-    <!-- Text box to display message -->
-    <div class="text-box" id="message-box">
-        <!-- Message will be injected here by JavaScript -->
-    </div>
-
-    <!-- Page counter -->
+    <div class="text-box" id="message-box"></div>
     <div class="page-counter" id="page-counter">Page 1 of 1</div>
 
     <script>
         let currentPage = 1;
         let totalPages = 1;
         let messages = [];
+        let isAnimating = false;
 
-        // Fetch the data from the API
         fetch('https://national-rail-api.davwheat.dev/staffdepartures/CAR?expand=true')
             .then(response => response.json())
             .then(data => {
-                // Check if there are nrccMessages and if there are xhtmlMessages
                 const nrccMessages = data.nrccMessages;
                 if (nrccMessages && nrccMessages.length > 0) {
-                    // Process and clean each message
                     messages = nrccMessages.map(message => processMessage(message.xhtmlMessage));
                     totalPages = messages.length;
                     updateMessage();
@@ -93,58 +104,54 @@
                     document.getElementById('message-box').innerHTML = 'No messages available.';
                 }
 
-                // Update page counter initially
                 updatePageCounter();
 
-                // Cycle through messages every 10 seconds
                 setInterval(() => {
-                    currentPage = (currentPage % totalPages) + 1; // Loop back to the first page after the last one
-                    updateMessage();
-                    updatePageCounter();
-                }, 10000); // 10 seconds
+                    if (!isAnimating) {
+                        currentPage = (currentPage % totalPages) + 1;
+                        transitionMessage();
+                        updatePageCounter();
+                    }
+                }, 7000);
             })
             .catch(error => {
                 console.error('Error fetching data:', error);
                 document.getElementById('message-box').innerHTML = 'Failed to load messages.';
             });
 
-        // Function to process and clean the message content
         function processMessage(message) {
-            // Get the first 5 characters
-            let firstFiveChars = message.slice(0, 5);
-
-            // Remove <p> and </p> tags from the first 5 characters only
-            firstFiveChars = firstFiveChars.replace(/<p>/g, '').replace(/<\/p>/g, '');
-
-            // Get the rest of the message (starting from the 6th character onwards)
+            let firstFiveChars = message.slice(0, 5).replace(/<p>/g, '').replace(/<\/p>/g, '');
             let remainingMessage = message.slice(5);
-
-            // Reassemble the cleaned message
             let cleanedMessage = firstFiveChars + remainingMessage;
-
-            // Remove newline characters
-            cleanedMessage = cleanedMessage.replace(/\n/g, '');
-
-            // Remove Unicode escape sequences
-            cleanedMessage = cleanedMessage.replace(/\\u[0-9a-fA-F]{4}/g, '');
-
-            // Replace certain phrases
+            cleanedMessage = cleanedMessage.replace(/\n/g, '').replace(/\\u[0-9a-fA-F]{4}/g, '');
             cleanedMessage = cleanedMessage.replace(/(More details|More information|Latest).*/i, 'More details at nationalrail.co.uk.');
-
-            // Add line breaks after colons
             cleanedMessage = cleanedMessage.replace(/:/g, ':<br>');
-
             return cleanedMessage;
         }
 
-        // Function to update the message box
+        function transitionMessage() {
+            const messageBox = document.getElementById('message-box');
+            messageBox.classList.add('fade-out');
+            isAnimating = true;
+
+            setTimeout(() => {
+                updateMessage();
+                messageBox.classList.remove('fade-out');
+                messageBox.classList.add('fade-in');
+
+                setTimeout(() => {
+                    messageBox.classList.remove('fade-in');
+                    isAnimating = false;
+                }, 500); // Adjusted to 0.5 seconds
+            }, 500); // Adjusted to 0.5 seconds
+        }
+
         function updateMessage() {
             if (messages.length > 0) {
                 document.getElementById('message-box').innerHTML = messages[currentPage - 1];
             }
         }
 
-        // Function to update the page counter
         function updatePageCounter() {
             document.getElementById('page-counter').textContent = `Page ${currentPage} of ${totalPages}`;
         }
