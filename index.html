@@ -92,7 +92,7 @@
         let messages = [];
         let isAnimating = false;
 
-        fetch('https://national-rail-api.davwheat.dev/staffdepartures/CAR?expand=true')
+        fetch('https://national-rail-api.davwheat.dev/staffdepartures/YRK?expand=true')
             .then(response => response.json())
             .then(data => {
                 const nrccMessages = data.nrccMessages;
@@ -142,8 +142,8 @@
                 setTimeout(() => {
                     messageBox.classList.remove('fade-in');
                     isAnimating = false;
-                }, 500); // Adjusted to 0.5 seconds
-            }, 500); // Adjusted to 0.5 seconds
+                }, 250); // Adjusted to 0.5 seconds
+            }, 250); // Adjusted to 0.5 seconds
         }
 
         function updateMessage() {
