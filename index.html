@@ -92,7 +92,7 @@
         let messages = [];
         let isAnimating = false;
 
-        fetch('https://national-rail-api.davwheat.dev/staffdepartures/YRK?expand=true')
+        fetch('https://national-rail-api.davwheat.dev/staffdepartures/CAR?expand=true')
             .then(response => response.json())
             .then(data => {
                 const nrccMessages = data.nrccMessages;
