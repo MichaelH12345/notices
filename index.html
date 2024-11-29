@@ -23,7 +23,7 @@
         }
 
         .text-box {
-            width: 540px;
+            width: 525px;
             left: 25px;
             color: white;
             padding: 20px;
@@ -122,15 +122,10 @@
         });
 
     function processMessage(message) {
-        let firstFiveChars = message.slice(0, 5).replace(/<p>/g, '').replace(/<\/p>/g, '');
-        let remainingMessage = message.slice(5);
-        let cleanedMessage = firstFiveChars + remainingMessage;
-
-        cleanedMessage = cleanedMessage.replace(/\n/g, '').replace(/\\u[0-9a-fA-F]{4}/g, '');
+        let cleanedMessage = message.replace(/\n/g, '').replace(/\\u[0-9a-fA-F]{4}/g, '');
         cleanedMessage = cleanedMessage.replace(/(More details|More information|Latest).*/i, 'More details at nationalrail.co.uk.');
         cleanedMessage = cleanedMessage.replace(/:/g, ':<br>');
 
-        // Adding extra text based on keywords
         let lowerMessage = cleanedMessage.toLowerCase();
         let extraText = '';
 
@@ -138,28 +133,10 @@
             extraText = '<br><br>If you need to use a lift, please speak to a member of staff before boarding. Please also allow extra time for your journey so we can help re-arrange your travel plans. Sorry for the inconvenience.';
         } else if (lowerMessage.includes('ticket office') && lowerMessage.includes('closed')) {
             extraText = '<br><br>You can buy tickets from the machines or from the Train Manager onboard your train. Apologies for any inconvenience.';
-        } else if (lowerMessage.includes('delay') || lowerMessage.includes('delays')) {
-            let operator = ''; // Update this value if the API includes it in the response
-            if (lowerMessage.includes('avanti west coast')) {
-                operator = 'Avanti West Coast'; // Example of operator match
-            }
-
-            if (lowerMessage.includes('delay') && operator === 'Avanti West Coast') {
-                extraText = '<br><br>We\'re really sorry for the delay today. If your train arrives 15 minutes late or more, you can claim compensation at https://www.avantiwestcoast.co.uk/help-and-support/delay-repay.';
-            } else if (lowerMessage.includes('delay')) {
-                extraText = '<br><br>You may be entitled to compensation if you experience a delay in completing your journey today. Please keep your train ticket and make a note of your journey, as both will be required to support any claim.';
-            }
+        } else if (lowerMessage.includes('delay')) {
+            extraText = '<br><br>We\'re really sorry for the delay today. If your train arrives 15 minutes late or more, you can claim compensation at avantiwestcoast.co.uk/delay-repay.';
         } else if (lowerMessage.includes('cancelled') || lowerMessage.includes('cancellations')) {
-            let operator = ''; // Update this value if the API includes it in the response
-            if (lowerMessage.includes('avanti west coast')) {
-                operator = 'Avanti West Coast';
-            }
-
-            if (operator === 'Avanti West Coast') {
-                extraText = '<br><br>If you no longer wish to travel because your train is cancelled, you can request a full refund from where you bought your ticket.<br>If you still wish to travel but your train arrives 15 minutes late or more, you can claim compensation at delayrepay.avantiwestcoast.co.uk.';
-            } else {
-                extraText = '<br><br>You may be entitled to compensation if your train is cancelled today. Please keep your train ticket and make a note of your journey, as both will be required to support any claim.';
-            }
+            extraText = '<br><br>If you no longer wish to travel because your train is cancelled, you can request a full refund from where you bought your ticket.';
         }
 
         return cleanedMessage + extraText;
@@ -167,7 +144,7 @@
 
     function transitionMessage() {
         if (messages.length === 1) {
-            return; // Skip fade animations if there's only one message
+            return;
         }
 
         const messageBox = document.getElementById('message-box');
@@ -182,8 +159,8 @@
             setTimeout(() => {
                 messageBox.classList.remove('fade-in');
                 isAnimating = false;
-            }, 250); // Adjusted to 0.5 seconds
-        }, 250); // Adjusted to 0.5 seconds
+            }, 500);
+        }, 500);
     }
 
     function updateMessage() {
